@@ -1,0 +1,10 @@
+[Core]
+name = Comics
+module = comics
+
+[Documentation]
+description = Your daily dose of webcomics
+
+[Python]
+version = 3
+
