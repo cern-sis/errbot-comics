@@ -1,16 +1,24 @@
-from errbot import BotPlugin, botcmd
+from errbot import BotPlugin
 import requests
 from bs4 import BeautifulSoup
 from datetime import date
 import io
+from schedule import repeat, every, run_pending
 
 
 class Comics(BotPlugin):
     def zulip(self):
         return self._bot.client
 
-    @botcmd
-    def dilbert(self, msg, args):
+    def activate(self):
+        super().activate()
+        self.start_poller(60, self.run)
+
+    def run(self):
+        run_pending()
+
+    @repeat(every().day.at("08:30"))
+    def dilbert(self):
         today = f"{date.today():%Y-%m-%d}"
         url = f"https://dilbert.com/strip/{today}"
         page = requests.get(url)
@@ -23,4 +31,7 @@ class Comics(BotPlugin):
             i.name = f"dilbert-{today}.gif"
             result = self.zulip().upload_file(i)
 
-            return f"[{html_img['alt']}]({result['uri']})\n\n[Source]({url})"
+        self.send(
+            self.build_identifier("#{{off-topic}}*{{Dilbert}}"),
+            f"[{html_img['alt']}]({result['uri']})\n\n[Source]({url})",
+        )
